@@ -9,6 +9,7 @@ Leveraging Angular and Three.js to create an audio visualizer.
 Accomplished:
 
 * Replicated THREE.js example audio visualizer: https://threejs.org/examples/#webaudio_visualizer, using Angular instead of Vanilla JS.
+* Was able to bypass Chrome's strict audio playing rules
 
 Next Steps:
 
