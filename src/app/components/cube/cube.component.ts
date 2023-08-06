@@ -1,87 +1,61 @@
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
-import * as THREE from "three"
+import { Component } from '@angular/core';
+import * as THREE from "three";
 @Component({
   selector: 'app-cube',
   templateUrl: './cube.component.html',
   styleUrls: ['./cube.component.css']
 })
-export class CubeComponent implements OnInit {
-  ngOnInit(){
-    this.createThreeJsBox();
-  }
-  createThreeJsBox(): void {
+export class CubeComponent {
+  playing = false;
+  listener = new THREE.AudioListener();
+  audio = new THREE.Audio( this.listener );
+  fftSize = 256;
+  analyser = new THREE.AudioAnalyser( this.audio, this.fftSize );
+
+  onClick(){
+    this.playing = true;
+    let media = new Audio();
+    media.src = "../../assets/hehe.mp3";
+    media.load();
+    this.audio.setMediaElementSource( media );
+    this.audio.hasPlaybackControl = true;
+    media.play();
+    this.audio.play();
+    console.log(media.paused);
+    let uniforms: { tAudioData: any; }, renderer: THREE.WebGLRenderer;
     const canvas = document.getElementById('canvas');
-
-    const scene = new THREE.Scene();
-
-    const material = new THREE.MeshToonMaterial();
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    const pointLight = new THREE.PointLight(0xffffff, 0.5);
-    pointLight.position.x = 2;
-    pointLight.position.y = 2;
-    pointLight.position.z = 2;
-    scene.add(pointLight);
-
-    const box = new THREE.Mesh(
-      new THREE.BoxGeometry(1.5, 1.5, 1.5),
-      material
-    );
-
-    const torus = new THREE.Mesh(
-      new THREE.TorusGeometry(5, 1.5, 16, 100),
-      material
-    );
-
-    scene.add(torus, box);
-
+    if (!canvas) {
+      return;
+    }
     const canvasSizes = {
       width: window.innerWidth,
       height: window.innerHeight,
     };
-
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      canvasSizes.width / canvasSizes.height,
-      0.001,
-      1000
-    );
-    camera.position.z = 30;
-    scene.add(camera);
-
-    if (!canvas) {
-      return;
-    }
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvas,
-    });
+    renderer = new THREE.WebGLRenderer( { canvas: canvas, } );
     renderer.setClearColor(0xe232222, 1);
     renderer.setSize(canvasSizes.width, canvasSizes.height);
-
-    const clock = new THREE.Clock();
-
+    const scene = new THREE.Scene();
+    const camera = new THREE.Camera();
+    const format = ( renderer.capabilities.isWebGL2 ) ? THREE.RedFormat : THREE.LuminanceFormat;
+    uniforms = {
+      tAudioData: { value: new THREE.DataTexture( this.analyser.data, this.fftSize / 2, 1, format ) }
+    };
+    const geometry = new THREE.PlaneGeometry( 1, 1 );
+    const material = new THREE.ShaderMaterial( {
+      uniforms: uniforms,
+      vertexShader: "varying vec2 vUv; void main() { vUv = uv;gl_Position = vec4( position, 1.0 );}",
+      fragmentShader: "uniform sampler2D tAudioData; varying vec2 vUv; void main() {vec3 backgroundColor = vec3( 0.125, 0.125, 0.125 );vec3 color = vec3( 1.0, 1.0, 0.0 );float f = texture2D( tAudioData, vec2( vUv.x, 0.0 ) ).r;float i = step( vUv.y, f ) * step( f - 0.0125, vUv.y );gl_FragColor = vec4( mix( backgroundColor, color, i ), 1.0 );} ",
+    } );
+    const mesh = new THREE.Mesh( geometry, material );
+    scene.add( mesh );
     const animateGeometry = () => {
-      const elapsedTime = clock.getElapsedTime();
-
-      // Update animation objects
-      box.rotation.x = elapsedTime;
-      box.rotation.y = elapsedTime;
-      box.rotation.z = elapsedTime;
-
-      torus.rotation.x = -elapsedTime;
-      torus.rotation.y = -elapsedTime;
-      torus.rotation.z = -elapsedTime;
-
-      // Render
-      renderer.render(scene, camera);
-
-      // Call animateGeometry again on the next frame
       window.requestAnimationFrame(animateGeometry);
+      this.analyser.getFrequencyData();
+      uniforms.tAudioData.value.needsUpdate = true;
+      renderer.render(scene, camera);
     };
 
     animateGeometry();
   }
+
 }
