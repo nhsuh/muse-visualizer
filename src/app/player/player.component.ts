@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import SceneInit from "../lib/SceneInit";
 import * as THREE from "three";
-import {vertexShader} from "../lib/Shaders";
+import {vertexShader, fragmentShader} from "../lib/Shaders";
 
 @Component({
   selector: 'app-player',
@@ -40,7 +40,6 @@ export class PlayerComponent implements OnInit {
   }
 
   async play() {
-    console.log("hello")
     if (this.audioContext === undefined) {
       this.setupAudioContext();
     }
@@ -63,7 +62,8 @@ export class PlayerComponent implements OnInit {
     const planeMaterial = new THREE.ShaderMaterial({
       uniforms: uniforms,
       vertexShader: vertexShader(),
-      wireframe: true
+      fragmentShader: fragmentShader(),
+      wireframe: false
     });
     const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
     planeMesh.rotation.x = -Math.PI / 2 + Math.PI / 4;
