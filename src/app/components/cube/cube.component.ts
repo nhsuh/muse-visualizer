@@ -39,13 +39,14 @@ export class CubeComponent {
     uniforms = {
       tAudioData: { value: new THREE.DataTexture( this.analyser.data, this.fftSize /2, 1, format ) },
     };
-    const geometry = new THREE.PlaneGeometry( 1, 1 );
+    const geometry = new THREE.PlaneGeometry( 1, 1, 64, 64 );
+    const testMat = new THREE.MeshNormalMaterial({wireframe : true});
     const material = new THREE.ShaderMaterial( {
       uniforms: uniforms,
       vertexShader: "varying vec2 vUv; void main() { vUv = uv;gl_Position = vec4( position,1.0 );}",
       fragmentShader: "uniform sampler2D tAudioData; varying vec2 vUv; void main() {vec3 backgroundColor = vec3( 0.1, 0.1,0.1 );vec3 color = vec3( 1, 0, vUv.y );float f = texture2D( tAudioData, vec2( vUv.x, 0 ) ).r;float i = step( vUv.y, f ) * step( f-f, vUv.y );gl_FragColor = vec4( mix( backgroundColor, color, i ), 1.0 );} ",
     } );
-    const mesh = new THREE.Mesh( geometry, material );
+    const mesh = new THREE.Mesh( geometry, testMat );
     scene.add( mesh );
     const animateGeometry = () => {
       window.requestAnimationFrame(animateGeometry);
